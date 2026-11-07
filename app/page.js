@@ -131,6 +131,7 @@ export default function Home() {
   const silentRef = useRef(null);
   const audioCtxRef = useRef(null);
   const pitchStopRef = useRef(null);
+  const btnRefs = useRef({}); // talk buttons, for the live voice rings
 
   useEffect(() => {
     const p = loadProfiles();
@@ -279,6 +280,7 @@ export default function Home() {
     if (audioCtxRef.current) {
       pitchStopRef.current = startListener(audioCtxRef.current, streamRef.current, {
         onSilence: () => rec.state === 'recording' && rec.stop(),
+        onLevel: (lvl) => btnRefs.current[slot]?.style.setProperty('--level', lvl.toFixed(2)),
       });
     }
     recorderRef.current = rec;
@@ -328,35 +330,47 @@ export default function Home() {
     }
   }
 
-  function renderButton(slot) {
+  function renderPerson(slot) {
     const p = profiles[slot];
     const ui = p.ui || {};
     const active = recording === slot;
+    const working = busy === slot;
     const disabled = Boolean(busy) || Boolean(recording && !active);
-    const status = active ? ui.listening : busy === slot ? ui.busy : ui.idle;
+    const status = active ? ui.listening : working ? ui.busy : ui.idle;
     const label = p.auto ? '🌐' : ui.label || p.name;
+    const state = active ? 'listening' : working ? 'working' : 'idle';
     return (
-      <div key={slot} className={`side ${slot === 'top' ? 'flipped' : ''}`}>
+      <section key={slot} className={`person person-${slot} ${slot === 'top' ? 'flipped' : ''} is-${state}`}>
         <button
-          className={`talk ${COLORS[slot]} ${active ? 'active' : ''} ${busy === slot ? 'busy' : ''}`}
+          ref={(el) => (btnRefs.current[slot] = el)}
+          className="talk"
           onClick={() => toggle(slot)}
           disabled={disabled}
+          aria-pressed={active}
         >
+          <span className="orb" aria-hidden="true">
+            <span className="ring ring-2" />
+            <span className="ring ring-1" />
+            <span className="orb-core" />
+          </span>
           <span className="talk-lang">{label}</span>
           <span className="talk-status">{status}</span>
-          {error?.slot === slot && <span className="talk-error">{error.text}</span>}
+          {error?.slot === slot && <span className="talk-error" role="alert">{error.text}</span>}
         </button>
-        <button className="chip" onClick={() => setPicker(slot)} disabled={Boolean(recording || busy)}>
-          🌐 {p.auto ? 'Auto' : ui.label || p.name} ▾
-        </button>
-        <button
-          className={`chip chip-learn ${p.learn ? 'on' : ''}`}
-          onClick={() => toggleLearn(slot)}
-          disabled={Boolean(recording || busy)}
-        >
-          🎓 {p.learn ? 'On' : 'Off'}
-        </button>
-      </div>
+        <div className="person-bar">
+          <button className="chip" onClick={() => setPicker(slot)} disabled={Boolean(recording || busy)}>
+            🌐 {p.auto ? 'Auto' : ui.label || p.name}
+          </button>
+          <button
+            className={`chip chip-learn ${p.learn ? 'on' : ''}`}
+            onClick={() => toggleLearn(slot)}
+            disabled={Boolean(recording || busy)}
+            aria-pressed={Boolean(p.learn)}
+          >
+            🎓 {p.learn ? 'Learning' : 'Learn'}
+          </button>
+        </div>
+      </section>
     );
   }
 
@@ -421,15 +435,15 @@ export default function Home() {
               {c.correction.why}
             </p>
           )}
-          <p className="coach-label">🎓 {c.correction ? '✓' : '🗣'}</p>
+          <p className="coach-label">{c.correction ? 'Better way to say it' : 'Say it yourself'}</p>
           <p className="translated">{c.correction?.better || m.translated}</p>
           {c.pronunciation && <p className="pron">{c.pronunciation}</p>}
           {c.tip && <p className="tip">💡 {c.tip}</p>}
           {!c.correction && <p className="said">{m.original}</p>}
           {m.audio && (
             <div className="coach-buttons">
-              <button className="replay inline" onClick={() => play(m.audio)}>▶</button>
-              <button className="replay inline" onClick={() => play(m.audio, 0.7)}>🐢</button>
+              <button className="replay inline" onClick={() => play(m.audio)} aria-label="Play">▶</button>
+              <button className="replay inline" onClick={() => play(m.audio, 0.7)} aria-label="Play slowly">🐢</button>
             </div>
           )}
         </div>
@@ -439,17 +453,21 @@ export default function Home() {
       <div className={`half ${flipped ? 'flipped' : ''}`}>
         {m ? (
           <>
-            {m.wrongButton && <p className="warn">⚠︎ ?</p>}
+            {m.wrongButton && <p className="warn">Wrong button? · ¿Botón equivocado?</p>}
             <p className="translated">{main}</p>
             <p className="said">{sub}</p>
             {m.audio && (
-              <button className="replay" onClick={() => play(m.audio)}>
+              <button className="replay" onClick={() => play(m.audio)} aria-label="Play again">
                 ▶
               </button>
             )}
           </>
         ) : (
-          <p className="hint">{flipped ? 'Toca tu botón, habla, y toca otra vez.' : 'Tap your button, talk, then tap again.'}</p>
+          <p className="hint">
+            {profiles[slot].code === 'es'
+              ? 'Tocá tu botón y hablá. Se detiene solo cuando terminás.'
+              : 'Tap your button and talk. It stops when you pause.'}
+          </p>
         )}
       </div>
     );
@@ -461,29 +479,26 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <main className="app">
       <div className="stage">
-      {renderButton('top')}
-
-      <section className="latest">
-        {renderHalf('top')}
-        <div className="divider" />
-        {renderHalf('bottom')}
-      </section>
-
-      {renderButton('bottom')}
+        {renderPerson('top')}
+        <section className="strip" aria-live="polite">
+          {renderHalf('top')}
+          {renderHalf('bottom')}
+        </section>
+        {renderPerson('bottom')}
       </div>
       {renderPicker()}
 
       <section className="dialects">
-        <a className="mesa-link" href="/mesa">🍽 Mesa mode: captions for a whole table</a>
+        <a className="mesa-link" href="/mesa">🍽 Mesa mode: follow a whole table</a>
         <button className="link" onClick={() => setShowDetails((s) => !s)}>
-          {showDetails ? 'Hide' : 'Show'} detected dialects
+          {showDetails ? 'Hide' : 'Show'} what it has learned
         </button>
         {showDetails && (
           <div className="dialect-details">
             {['top', 'bottom'].map((slot) => (
-              <div key={slot} className={`dialect-card ${COLORS[slot]}-border`}>
+              <div key={slot} className={`dialect-card dialect-${slot}`}>
                 <p className="dialect-name">{describe(profiles[slot])}</p>
                 {profiles[slot].notes?.length > 0 && (
                   <ul>
@@ -504,7 +519,7 @@ export default function Home() {
       {history.length > 1 && (
         <section className="history">
           {history.slice(1).map((m) => (
-            <div key={m.id} className={`bubble ${COLORS[m.slot]}-border`} onClick={() => m.audio && play(m.audio)}>
+            <div key={m.id} className={`bubble bubble-${m.slot}`} onClick={() => m.audio && play(m.audio)}>
               <p className="said">{m.original}</p>
               <p className="translated">{m.translated}</p>
             </div>
