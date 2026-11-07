@@ -41,10 +41,10 @@ npm run dev                  # http://localhost:3000
 
 Import this repo in Vercel and set the environment variable `OPENAI_API_KEY` (Production). Every push to `main` redeploys.
 
-Optional overrides: `OPENAI_STT_MODEL`, `OPENAI_TEXT_MODEL`, `OPENAI_TTS_MODEL`.
+Optional: `APP_PASSCODE` locks the app behind a family passcode (each phone enters it once and stays unlocked for a year; changing it logs everyone out). Model overrides: `OPENAI_STT_MODEL`, `OPENAI_TEXT_MODEL`, `OPENAI_TTS_MODEL`.
 
 ## Notes
 
-- Anyone with the URL can use it on your OpenAI credit; don't share the link publicly.
+- Set `APP_PASSCODE` so strangers with the URL can't use your OpenAI credit.
 - Tune the starting Honduran word list in `app/page.js` (`DEFAULT_PROFILES`).
 - Let people know when the phone is listening and translating.
