@@ -156,7 +156,7 @@ export default function Mesa() {
         return;
       }
       setCaptions((c) =>
-        c.map((x) => (x.seq === seq ? { seq, original: data.original, translation: data.translation, mine: data.mine } : x)),
+        c.map((x) => (x.seq === seq ? { seq, original: data.original, translation: data.translation, mine: data.mine, mix: data.mix } : x)),
       );
     } catch {
       setCaptions((c) => c.filter((x) => x.seq !== seq));
@@ -220,6 +220,7 @@ export default function Mesa() {
             <div key={c.seq} className="cap pending">…</div>
           ) : (
             <div key={c.seq} className={`cap ${c.mine ? 'mine' : ''}`}>
+              {c.mix?.length > 1 && <p className="mix-tag">{c.mix.map((x) => x.toUpperCase()).join(' + ')}</p>}
               {!c.mine && <p className="cap-tr">{c.translation}</p>}
               <p className="cap-orig">{c.original}</p>
             </div>

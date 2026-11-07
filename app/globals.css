@@ -391,6 +391,17 @@ main {
   .person { transition: none; }
 }
 
+/* Shown when someone mixed languages, e.g. "ES + FR" */
+.mix-tag {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--sea-deep);
+  background: var(--sea-tint);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
 /* ---------- Passcode screen ---------- */
 
 .unlock { min-height: 100dvh; justify-content: center; }

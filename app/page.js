@@ -454,6 +454,7 @@ export default function Home() {
         {m ? (
           <>
             {m.wrongButton && <p className="warn">Wrong button? · ¿Botón equivocado?</p>}
+            {m.mix?.length > 1 && <p className="mix-tag">{m.mix.map((c) => c.toUpperCase()).join(' + ')}</p>}
             <p className="translated">{main}</p>
             <p className="said">{sub}</p>
             {m.audio && (
@@ -475,7 +476,8 @@ export default function Home() {
 
   function describe(p) {
     if (p.auto) return 'Auto-detect · waiting for first words';
-    return `${p.dialect || p.name}${p.locked ? ' (chosen)' : ''}${p.pitch ? ` · voice ~${Math.round(p.pitch)} Hz` : ''} · ${Math.round((p.confidence || 0) * 100)}% · ${p.turns || 0} turns`;
+    const also = p.also_speaks?.length ? ` · also ${p.also_speaks.join(', ')}` : '';
+    return `${p.dialect || p.name}${p.locked ? ' (chosen)' : ''}${also}${p.pitch ? ` · voice ~${Math.round(p.pitch)} Hz` : ''} · ${Math.round((p.confidence || 0) * 100)}% · ${p.turns || 0} turns`;
   }
 
   return (
